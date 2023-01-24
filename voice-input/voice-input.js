@@ -1,11 +1,25 @@
-import WSRTC from 'wsrtc/wsrtc.js';
-import {chatManager} from '../chat-manager.js';
-import universe from '../universe.js';
-import metaversefile from 'metaversefile';
+// import WSRTC from 'wsrtc/wsrtc.js';
+// import {chatManager} from '../chat-manager.js';
+// import universe from '../universe.js';
+// import metaversefile from 'metaversefile';
+
+//
+
+const getUserMedia = () => navigator.mediaDevices.getUserMedia({
+  audio: true,
+});
+
+//
 
 class VoiceInput extends EventTarget {
-  constructor() {
+  constructor(opts = {}) {
     super();
+
+    if (opts.audioContext) {
+      this.audioContext = opts.audioContext;
+    } else {
+      this.audioContext = new AudioContext();
+    }
 
     this.mediaStream = null;
     this.speechRecognition = null;
@@ -16,16 +30,16 @@ class VoiceInput extends EventTarget {
   }
 
   async enableMic() {
-    await WSRTC.waitForReady();
-    this.mediaStream = await WSRTC.getUserMedia();
+    // await WSRTC.waitForReady();
+    this.mediaStream = await getUserMedia();
 
-    const localPlayer = metaversefile.useLocalPlayer();
-    localPlayer.setMicMediaStream(this.mediaStream);
+    // const localPlayer = metaversefile.useLocalPlayer();
+    // localPlayer.setMicMediaStream(this.mediaStream);
 
-    const wsrtc = universe.getConnection();
-    if (wsrtc) {
-      wsrtc.enableMic(this.mediaStream);
-    }
+    // const wsrtc = universe.getConnection();
+    // if (wsrtc) {
+    //   wsrtc.enableMic(this.mediaStream);
+    // }
 
     this.dispatchEvent(new MessageEvent('micchange', {
       data: {
@@ -36,16 +50,8 @@ class VoiceInput extends EventTarget {
 
   disableMic() {
     /* if (this.micEnabled()) */ {
-      const wsrtc = universe.getConnection();
-      if (wsrtc) {
-        wsrtc.disableMic();
-      } else {
-        WSRTC.destroyUserMedia(this.mediaStream);
-      }
-      this.mediaStream = null;
-      
-      const localPlayer = metaversefile.useLocalPlayer();
-      localPlayer.setMicMediaStream(null);
+      // const localPlayer = metaversefile.useLocalPlayer();
+      // localPlayer.setMicMediaStream(null);
 
       this.dispatchEvent(new MessageEvent('micchange', {
         data: {
@@ -102,9 +108,15 @@ class VoiceInput extends EventTarget {
         .replace(/celia|sylvia|sileo|cilia|tilia|zilia/gi, 'Scillia'); */
       console.log('speech:', [final_transcript]);
       if (final_transcript) {
-        chatManager.addMessage(final_transcript, {
+        /* chatManager.addMessage(final_transcript, {
           timeout: 3000,
-        });
+        }); */
+
+        this.dispatchEvent(new MessageEvent('speech', {
+          data: {
+            text: final_transcript,
+          },
+        }));
       }
 
       if (localSpeechRecognition === this.speechRecognition) {
